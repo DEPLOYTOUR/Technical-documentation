@@ -6,7 +6,7 @@ This repository contains the technical documentation of the **DEPLOYTOUR – Eur
 - Project architecture  
 - MVP components and technical roadmap  
 - Connector configuration & integration guidelines  
-- Metadata and catalogue specifications (DCAT-AP, GeoDCAT-AP)  
+- Metadata and catalogue specifications (DCAT-AP, etc)  
 - Vocabularies, ontologies, and semantic models  
 - API documentation and examples  
 - User interface guidelines and data collection wizard  
