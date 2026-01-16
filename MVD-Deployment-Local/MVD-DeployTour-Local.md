@@ -3,7 +3,7 @@
 **Introducción**:
 
 Este documento detalla el proceso completo de despliegue y ejecución de
-los tests end-to-end del **\*\*Dataspace Ecosystem\*\***.
+los tests end-to-end del **MVD de Eona-X**.
 
 **Contexto del Proyecto**
 
@@ -11,7 +11,7 @@ El objetivo es validar el funcionamiento de un dataspace mínimo viable
 (MVD - Minimum Viable Dataspace) que simula el intercambio seguro de
 datos entre participantes en el ecosistema.
 
-![](media/image1.tmp){width="4.875in" height="2.0833333333333335in"}
+![Infrastructure](images/infrastructure.png)
 
 Componentes Principales
 
@@ -31,20 +31,21 @@ siguiente readme
 **Problemas:**
 
 Al ejecutar el comand
-
+```
 terraform -chdir=system-tests apply -auto-approve
 -var=\"environment=local\"
+```
 
 el resultado era fallido, dado que los scripts de terraform buscan
 imágenes de docker que inician con localhost
 
-por ejemplo localhost/kafka-proxy-k8s-manager:latest
+por ejemplo `localhost/kafka-proxy-k8s-manager:latest`
 
 Para solventar dicho problema es necesario re-taggear las imagenes
 construidas:
-
+```
 docker tag control-plane-postgresql-hashicorpvault:latest
-localhost/control-plane-postgresql-hashicorpvault:latest\\n
+localhost/control-plane-postgresql-hashicorpvault:latest
 
 docker tag data-plane-postgresql-hashicorpvault:latest
 localhost/data-plane-postgresql-hashicorpvault:latest
@@ -72,66 +73,40 @@ localhost/telemetry-storage-postgresql-hashicorpvault:latest
 
 docker tag telemetry-csv-manager-postgresql-hashicorpvault:latest
 localhost/telemetry-csv-manager-postgresql-hashicorpvault:latest
-
-y luego es necesario cargar esas imagenes al cluster con kind, de la
+```
+Y luego es necesario cargar esas imagenes al cluster con kind, de la
 siguiente manera
 
-kind load docker-image \\
-
-control-plane-postgresql-hashicorpvault:latest \\
-
-localhost/control-plane-postgresql-hashicorpvault:latest \\
-
-data-plane-postgresql-hashicorpvault:latest \\
-
-localhost/data-plane-postgresql-hashicorpvault:latest \\
-
-federated-catalog-postgresql-hashicorpvault:latest \\
-
-localhost/federated-catalog-postgresql-hashicorpvault:latest \\
-
-identity-hub-postgresql-hashicorpvault:latest \\
-
-localhost/identity-hub-postgresql-hashicorpvault:latest \\
-
-issuer-service-postgresql-hashicorpvault:latest \\
-
-localhost/issuer-service-postgresql-hashicorpvault:latest \\
-
-telemetry-service-postgresql-hashicorpvault:latest \\
-
-localhost/telemetry-service-postgresql-hashicorpvault:latest \\
-
-telemetry-agent-postgresql-hashicorpvault:latest \\
-
-localhost/telemetry-agent-postgresql-hashicorpvault:latest \\
-
-backend-service-provider:latest \\
-
-localhost/backend-service-provider:latest \\
-
-telemetry-storage-postgresql-hashicorpvault:latest \\
-
-localhost/telemetry-storage-postgresql-hashicorpvault:latest \\
-
-telemetry-csv-manager-postgresql-hashicorpvault:latest \\
-
-localhost/telemetry-csv-manager-postgresql-hashicorpvault:latest \\
-
-federated-catalog-filter-postgresql-hashicorpvault:latest \\
-
-localhost/federated-catalog-filter-postgresql-hashicorpvault:latest \\
-
-kafka-proxy-entra-auth:latest \\
-
-localhost/kafka-proxy-entra-auth:latest \\
-
-kafka-proxy-k8s-manager:latest \\
-
-localhost/kafka-proxy-k8s-manager:latest \\
-
+```
+kind load docker-image \
+control-plane-postgresql-hashicorpvault:latest \
+localhost/control-plane-postgresql-hashicorpvault:latest \
+data-plane-postgresql-hashicorpvault:latest \
+localhost/data-plane-postgresql-hashicorpvault:latest \
+federated-catalog-postgresql-hashicorpvault:latest \
+localhost/federated-catalog-postgresql-hashicorpvault:latest \
+identity-hub-postgresql-hashicorpvault:latest \
+localhost/identity-hub-postgresql-hashicorpvault:latest \
+issuer-service-postgresql-hashicorpvault:latest \
+localhost/issuer-service-postgresql-hashicorpvault:latest \
+telemetry-service-postgresql-hashicorpvault:latest \
+localhost/telemetry-service-postgresql-hashicorpvault:latest \
+telemetry-agent-postgresql-hashicorpvault:latest \
+localhost/telemetry-agent-postgresql-hashicorpvault:latest \
+backend-service-provider:latest \
+localhost/backend-service-provider:latest \
+telemetry-storage-postgresql-hashicorpvault:latest \
+localhost/telemetry-storage-postgresql-hashicorpvault:latest \
+telemetry-csv-manager-postgresql-hashicorpvault:latest \
+localhost/telemetry-csv-manager-postgresql-hashicorpvault:latest \
+federated-catalog-filter-postgresql-hashicorpvault:latest \
+localhost/federated-catalog-filter-postgresql-hashicorpvault:latest \
+kafka-proxy-entra-auth:latest \
+localhost/kafka-proxy-entra-auth:latest \
+kafka-proxy-k8s-manager:latest \
+localhost/kafka-proxy-k8s-manager:latest \
 -n dse-cluster
-
+```
 **¿Por qué cargar las imágenes?**
 
 Kind es un cluster aislado. Necesita tener las imágenes dentro del
@@ -145,7 +120,7 @@ terraform -chdir=system-tests apply -auto-approve
 El resultado de esto es ver en estado Running o completed, los pods que
 estan dentro del cluster
 
-![](media/image2.tmp){width="4.875in" height="4.791666666666667in"}
+![](images/Pods_Eona-X.png)
 
 Que despliega **terraform**:
 
@@ -205,35 +180,36 @@ Los tests necesitan acceso directo a Event Hub y PostgreSQL que tenemos
 levantado en nuestro cluster con kind, para lo cual es necesario
 ejecutar los siguientes comandos:
 
+```
 kubectl port-forward eventhubs-0 52717:5672
 
 kubectl port-forward postgresql-0 57521:5432 &
-
+```
 Posterior a aquello, es posible ejecutar test EndToEnd, con los test que
 estan realizados dentro del proyecto.
 
-./gradlew :system-tests:runner:test -DincludeTags=\"EndToEndTest\"
+```./gradlew :system-tests:runner:test -DincludeTags=\"EndToEndTest\"```
 
 Esto ejecutara los test que tengan el tag EndToEndTest en el submodulo
 runner.
 
 Esté es el resultado de una ejecución de test satisfactorios.
 
-![](media/image3.tmp){width="4.875in" height="1.6111111111111112in"}
+![](images/MVD_Eona-X.mp4)
 
 Si se desea ver logs de la ejecucion de los test, es posible hacerlo asi
 
 \# Logs del consumer (negociación de contratos)
 
-kubectl logs -f deployment/consumer-controlplane
+```kubectl logs -f deployment/consumer-controlplane```
 
 \# Logs del provider (transferencia de datos)
 
-kubectl logs -f deployment/provider-dataplane
+```kubectl logs -f deployment/provider-dataplane```
 
 \# Logs de telemetría
 
-kubectl logs -f deployment/authority-telemetryservice
+```kubectl logs -f deployment/authority-telemetryservice```
 
 Los tests simulan un **flujo completo de intercambio de datos** entre
 tres participantes de un dataspace, validando desde el descubrimiento de
