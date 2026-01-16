@@ -11,7 +11,7 @@ El objetivo es validar el funcionamiento de un dataspace mínimo viable
 (MVD - Minimum Viable Dataspace) que simula el intercambio seguro de
 datos entre participantes en el ecosistema.
 
-![Infrastructure](images/infrastructure.png)
+![Infrastructure](images/Infrastructure.png)
 
 Componentes Principales
 
