@@ -55,5 +55,4 @@ The following types of tests should be performed for this component:
 ## References
 
 - https://www.usebruno.com/
-- [Link to unit/integration test scripts]
-- [Deployment or setup documentation]
+- MVD-Deployment-Local
