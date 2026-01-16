@@ -1,12 +1,12 @@
-# Despliegue Local de MVDS-UI
+# Local Deployment of MVDS-UI
 
-Este documento describe los pasos necesarios para ejecutar en local la interfaz de usuario del proyecto **MVDS**.
+This document describes the necessary steps to run the **MVDS** project user interface locally.
 
 ---
 
-## 1. Clonar el repositorio
+## 1. Clone the repository
 
-Descargar la interfaz desde el repositorio:
+Download the interface from the repository:
 
 ```bash
 git clone https://github.com/AmadeusITGroup/Dataspace_UI.git
@@ -14,9 +14,9 @@ git clone https://github.com/AmadeusITGroup/Dataspace_UI.git
 
 ---
 
-## 2. Instalar las dependencias
+## 2. Install dependencies
 
-Desde la raíz del proyecto ejecutar:
+From the root of the project, run:
 
 ```bash
 npm install
@@ -24,21 +24,21 @@ npm install
 
 ---
 
-## 3. Configurar el backend local
+## 3. Configure the local backend
 
-Abrir el proyecto y modificar el archivo `api.config.local-backend.ts` para añadir en este la constante `managementBEContextPath`, necesaria para el arranque de la aplicación.
+Open the project and modify the `api.config.local-backend.ts` file to add the `managementBEContextPath` constant, which is required to start the application.
 
-![Ejemplo de configuración backend](./images/deploy_ui/ui_backend_config.png)
+![Backend configuration example](./images/deploy_ui/ui_backend_config.png)
 
-Las constantes `basePath` y `PARTICIPANT_ID` se configuran en el archivo `angular.json` del proyecto, por defecto vienen como se ve en la imagen.
+The `basePath` and `PARTICIPANT_ID` constants are configured in the project's `angular.json` file. By default, they appear as shown in the image.
 
-![Ejemplo configuración rutas](./images/deploy_ui/ui_backend_constants_config.png)
+![Routes configuration example](./images/deploy_ui/ui_backend_constants_config.png)
 
 ---
 
-## 4. Arrancar la aplicación
+## 4. Start the application
 
-Ejecutar uno de los siguientes comandos:
+Run one of the following commands:
 
 ```bash
 npm run start:local-backend-provider
@@ -47,8 +47,8 @@ npm run start:local-backend-consumer
 
 ---
 
-## 5. Configurar el proxy hacia el backend
+## 5. Configure the proxy to the backend
 
-Modificar el archivo `proxy.local-backend.conf.json` y actualizar la propiedad `target` para que apunte a la URL del entorno donde se encuentra el backend.
+Modify the `proxy.local-backend.conf.json` file and update the `target` property to point to the URL of the environment where the backend is located.
 
-![Ejemplo de configuración proxy](./images/deploy_ui/ui_proxy_config.png)
+![Proxy configuration example](./images/deploy_ui/ui_proxy_config.png)
