@@ -1,48 +1,43 @@
 # MVD - EONAX
 
-**Introducción**:
+**Introduction**:
 
-Este documento detalla el proceso completo de despliegue y ejecución de
-los tests end-to-end del **MVD de Eona-X**.
+This document details the complete deployment and execution process for the **MVD de Eona-X** end-to-end tests..
 
-**Contexto del Proyecto**
+**Project Context**
 
-El objetivo es validar el funcionamiento de un dataspace mínimo viable
-(MVD - Minimum Viable Dataspace) que simula el intercambio seguro de
-datos entre participantes en el ecosistema.
+The objective is to validate the operation of a Minimum Viable Dataspace (MVD) that simulates secure data exchange between participants within the ecosystem.
 
 ![Infrastructure](images/Infrastructure.png)
 
-Componentes Principales
+Main Components
 
-- **Authority**: Autoridad de confianza que emite credenciales
+- **Authority**: Trusted authority that issues credentials.
 
-- **Provider**: Organización que ofrece datos/APIs
+- **Provider**: Organization that offers data/APIs.
 
-- **Consumer**: Organización que consume datos
+- **Consumer**: Organization that consumes data.
 
-**Instalación de MVD**
+**MVD Installation**
 
-Los pasos basicos para instalación de este MVD se encuentran en el
-siguiente readme
+The basic steps for installing this MVD can be found in the following readme:
 
 <https://github.com/AmadeusITGroup/dataspace-ecosystem/blob/main/system-tests/readme.md>
 
-**Problemas:**
+**Issues:**
 
-Al ejecutar el comand
+When running the following command:
 ```
 terraform -chdir=system-tests apply -auto-approve
 -var=\"environment=local\"
 ```
 
-el resultado era fallido, dado que los scripts de terraform buscan
-imágenes de docker que inician con localhost
+The result failed because the Terraform scripts look for Docker images starting with localhost
 
-por ejemplo `localhost/kafka-proxy-k8s-manager:latest`
+For example `localhost/kafka-proxy-k8s-manager:latest`
 
-Para solventar dicho problema es necesario re-taggear las imagenes
-construidas:
+To solve this problem, it is necessary to re-tag the built images:
+
 ```
 docker tag control-plane-postgresql-hashicorpvault:latest
 localhost/control-plane-postgresql-hashicorpvault:latest
@@ -74,8 +69,7 @@ localhost/telemetry-storage-postgresql-hashicorpvault:latest
 docker tag telemetry-csv-manager-postgresql-hashicorpvault:latest
 localhost/telemetry-csv-manager-postgresql-hashicorpvault:latest
 ```
-Y luego es necesario cargar esas imagenes al cluster con kind, de la
-siguiente manera
+Then, it is necessary to load these images into the kind cluster as follows
 
 ```
 kind load docker-image \
@@ -107,423 +101,317 @@ kafka-proxy-k8s-manager:latest \
 localhost/kafka-proxy-k8s-manager:latest \
 -n dse-cluster
 ```
-**¿Por qué cargar las imágenes?**
+**Why load the images?**
 
-Kind es un cluster aislado. Necesita tener las imágenes dentro del
-cluster para poder desplegarlas.
+Kind is an isolated cluster. It needs to have the images available internally to deploy them.
 
-Luego de esto, es necesario volver a realizar un apply de terraform
+After this, you must run the Terraform apply again:
 
+`
 terraform -chdir=system-tests apply -auto-approve
--var=\"environment=local\"
+-var=\"environment=local\"`
 
-El resultado de esto es ver en estado Running o completed, los pods que
-estan dentro del cluster
+The result should show the pods within the cluster in a `Running` or `Completed` state
 
 ![](images/Pods_Eona-X.png)
 
-Que despliega **terraform**:
+What **terraform** deploys :
 
-- **Infraestructura Base**
+- **Base Infrastructure**
 
-  - PostgreSQL (base de datos compartida)
+  - PostgreSQL (shared database)
 
-  - Azure Event Hub (emulador local)
+  - Azure Event Hub (local emulator)
 
-  - HashiCorp Vault (gestión de secretos)
+  - HashiCorp Vault (secret management)
 
-  - Azurite (emulador de Azure Storage)
+  - Azurite (Azure Storage emulator)
 
-  - Kafka Broker (para streaming)
+  - Kafka Broker (for streaming)
 
-- **Por cada participante (Authority, Provider, Consumer)**
+- **For each participant (Authority, Provider, Consumer)**
 
-  - Control Plane (gestión de contratos y catálogo)
+  - Control Plane (contract and catalog management)
 
-  - Data Plane (transferencia de datos)
+  - Data Plane (data transfer)
 
-  - Identity Hub (gestión de identidades)
+  - Identity Hub (identity management)
 
-  - Vault (instancia propia de secretos)
+  - Vault (dedicated secrets instance)
 
-  - Init jobs (inicialización de base de datos)
+  - Init jobs (database initialization)
 
 - **Componentes específicos de Authority**
 
-  - Issuer Service (emisión de credenciales)
+  - Issuer Service (credential issuance)
 
-  - Federated Catalog (catálogo centralizado)
+  - Federated Catalog (centralized catalog)
 
-  - Telemetry Service (recolección de eventos)
+  - Telemetry Service (event collection)
 
-  - Telemetry Storage (almacenamiento de telemetría)
+  - Telemetry Storage (telemetry storage)
 
-  - Telemetry CSV Manager (generación de reportes)
+  - Telemetry CSV Manager (report generation)
 
-- **Componentes específicos de Provider**
+- **Provider-specific components**
 
-  - Backend Service (APIs de datos reales)
+  - Backend Service (real data APIs)
 
-  - Kafka Proxy Manager (gestión de proxies Kafka)
+  - Kafka Proxy Manager (Kafka proxy management)
 
-  - Telemetry Agent (envío de telemetría)
+  - Telemetry Agent (telemetry reporting)
 
 - **Componentes específicos de Consumer**
 
-  - Kafka Proxy Manager (gestión de proxies Kafka)
+  - Kafka Proxy Manager (Kafka proxy management)
 
-  - Telemetry Agent (envío de telemetría)
+  - Telemetry Agent (telemetry reporting)
 
 **EndToEnd Test.**
 
-Los tests necesitan acceso directo a Event Hub y PostgreSQL que tenemos
-levantado en nuestro cluster con kind, para lo cual es necesario
-ejecutar los siguientes comandos:
+The tests require direct access to Event Hub and PostgreSQL running in our kind cluster. To achieve this, execute the following commands:
 
 ```
 kubectl port-forward eventhubs-0 52717:5672
 
 kubectl port-forward postgresql-0 57521:5432 &
 ```
-Posterior a aquello, es posible ejecutar test EndToEnd, con los test que
-estan realizados dentro del proyecto.
+Afterward, you can run the End-to-End tests included in the project.
 
 ```./gradlew :system-tests:runner:test -DincludeTags=\"EndToEndTest\"```
 
-Esto ejecutara los test que tengan el tag EndToEndTest en el submodulo
-runner.
+This will execute the tests tagged with EndToEndTest in the runner submodule.
 
-Esté es el resultado de una ejecución de test satisfactorios.
+The following shows the result of a successful test execution:
 
-![](images/MVD_Eona-X.mp4)
+If you wish to view the execution logs, you can do so as follows:
 
-Si se desea ver logs de la ejecucion de los test, es posible hacerlo asi
-
-\# Logs del consumer (negociación de contratos)
+- Consumer logs (contract negotiation)
 
 ```kubectl logs -f deployment/consumer-controlplane```
 
-\# Logs del provider (transferencia de datos)
+- Provider logs (data transfer)
 
 ```kubectl logs -f deployment/provider-dataplane```
 
-\# Logs de telemetría
+- Telemetry logs
 
 ```kubectl logs -f deployment/authority-telemetryservice```
 
-Los tests simulan un **flujo completo de intercambio de datos** entre
-tres participantes de un dataspace, validando desde el descubrimiento de
-datos hasta la generación de reportes de telemetría.
+The tests simulate a **complete data exchange flow** between three participants in a dataspace, validating everything from data discovery to telemetry report generation
 
-## **FASE 1: Setup Inicial (@BeforeAll)**
 
-### **¿Qué hace?**
+## **Phase 1: Setup Inicial (@BeforeAll)**
 
-Prepara todo el ecosistema antes de ejecutar cualquier test.
+### **¿What does it do?**
 
-### **Pasos principales:**
+Prepares the entire ecosystem before running any tests.
 
-1.  **Registrar participantes en la Authority**
+### **Main Steps:**
 
-    - Crea 3 participantes: Authority, Provider, Consumer
+1.  **Register participants with the Authority**
 
-    - Cada uno con su identidad descentralizada (DID)
+    - Creates 3 participants: Authority, Provider, Consumer.
+    - Each with its own Decentralized Identity (DID).
 
-<!-- -->
+2.  **Issue Verifiable Credentials**
 
-2.  **Emitir credenciales verificables**
+    - MembershipCredential: Proves membership in the dataspace.
+    - DomainCredential: Proves belonging to a specific domain (route/travel).
+    - Each participant receives 2 credentials.
 
-    - MembershipCredential: Prueba que perteneces al dataspace
+3.  **Publish 11 assets in the Provider**
 
-    - DomainCredential: Prueba que perteneces a un dominio específico
-      (route/travel)
-
-    - Cada participante recibe 2 credenciales
-
-<!-- -->
-
-3.  **Publicar 11 assets en el Provider**
-
-    - APIs REST (básicas, con OAuth2, con restricciones)
-
-    - Streams de Kafka
-
-    - Cada asset tiene:
-
-      - Metadata (nombre, descripción)
-
-      - DataAddress (dónde están los datos reales)
-
-      - Policy (quién puede acceder)
+    - REST APIs (basic, OAuth2, restricted).
+    - Kafka Streams.
+    - Each asset includes Metadata, DataAddress, and Policy.
 
 **Resultado:** El ecosistema listo con participantes autenticados y
 datasets disponibles.
 
-## **FASE 2: Tests de Catálogo (3 tests)**
+## **PHASE 2: Catalog Tests (3 tests)**
 
-### **¿Qué validan?**
+### **What do they validate?**
 
-Que los participantes pueden **descubrir** qué datos están disponibles
-en el dataspace.
+That participants can discover which data is available in the dataspace.
 
 ### **Tests:**
 
 #### **1.** catalog_provider()
-
-✓ La Authority consulta el catálogo del Provider
-
-✓ Valida que los 11 assets están disponibles
-
-✓ Verifica que cada asset tiene timestamp de creación
-
+```
+✓ Authority queries Provider's catalog
+✓ Validates that all 11 assets are available
+✓ Verifies that each asset has a creation timestamp
+```
 #### **2.** catalog_consumer()
-
-✓ El Consumer consulta su propio catálogo
-
-✓ Valida que está vacío (el consumer no publica datos)
-
+```
+✓ The consumer consults its own catalogue
+✓ It validates that it is empty (the consumer does not publish data)
+```
 #### **3.** catalog_consumer_restricted()
-
-✓ El Consumer consulta el catálogo del Provider
-
-✓ Solo ve assets del dominio \"route\" (porque tiene DomainCredential
+```
+✓ The Consumer consults the Provider's catalogue
+✓ It only sees assets from the ‘route’ domain (because it has DomainCredential
 route)
+✗ It does NOT see assets from the ‘travel’ domain (it does not have that credential)
+✓ It validates that discovery is restricted by credentials
+```
+**Result:** Catalogue discovery works and complies with visibility policies.
 
-✗ NO ve assets del dominio \"travel\" (no tiene esa credencial)
+## **PHASE 3: Transfer Tests (11 tests))**
 
-✓ Valida que el descubrimiento está restringido por credenciales
+### **What do they validate?**
 
-**Resultado:** El descubrimiento de catálogo funciona y respeta las
-políticas de visibilidad.
+That participants can negotiate contracts and transfer data securely.
 
-## **FASE 3: Tests de Transferencia (11 tests)**
+### **General transfer flow:**
 
-### **¿Qué validan?**
-
-Que los participantes pueden **negociar contratos** y **transferir
-datos** de forma segura.
-
-### **Flujo general de una transferencia:**
-
-1\. Descubrir asset en catálogo
-
-2\. Negociar contrato (validar políticas y credenciales)
-
-3\. Iniciar transferencia (obtener token de acceso)
-
-4\. Consumir datos (usando el token)
-
-5\. Enviar telemetría
+1. Discover asset in catalogue
+2. Negotiate contract (validate policies and credentials)
+3. Initiate transfer (obtain access token)
+4. Consume data (using token)
+5. Send telemetry
 
 ### **Tests principales:**
 
 #### **1.** transfer_success() **- 4 variaciones**
-
-✓ Transfiere datos de API REST básica
-
-✓ Transfiere datos de API con restricción de dominio
-
-✓ Transfiere datos de API con OAuth2
-
-✓ Transfiere datos de API con parámetros embebidos
-
-✓ Valida que los datos recibidos son correctos
-
+```
+✓ Transfer basic REST API data
+✓ Transfer API data with domain restriction
+✓ Transfer API data with OAuth2
+✓ Transfer API data with embedded parameters
+✓ Validate that the data received is correct
+```
 #### **2.** transfer_kafka_stream_oauth()
-
-✓ Negocia contrato para stream Kafka con OAuth2
-
-✓ Despliega proxy Kafka dinámicamente
-
-✓ Finaliza la transferencia correctamente
-
+```
+✓ Negotiates contract for Kafka stream with OAuth2
+✓ Deploys Kafka proxy dynamically
+✓ Completes transfer successfully
+```
 #### **3.** transfer_kafka_stream()
-
-✓ Negocia contrato para stream Kafka
-
-✓ Despliega proxy Kafka automáticamente en Kubernetes
-
-✓ Provider publica mensaje: \"Hello from provider!\"
-
-✓ Consumer lee el mensaje a través del proxy
-
-✓ Valida que el mensaje llegó correctamente
-
-✓ Limpia el proxy después de la transferencia
-
+```
+✓ Negotiate contract for Kafka stream
+✓ Automatically deploy Kafka proxy on Kubernetes
+✓ Provider publishes message: “Hello from provider!”
+✓ Consumer reads message through proxy
+✓ Validate that message arrived correctly
+✓ Clean up proxy after transfer
+```
 #### **4.** transfer_failure()
-
-✓ Intenta transferir datos de una API que falla (500 error)
-
-✓ Valida que el error se maneja correctamente
-
-✓ Verifica mensaje de error apropiado
-
+```
+✓ Attempt to transfer data from a failing API (500 error)
+✓ Validate that the error is handled correctly
+✓ Verify appropriate error message
+```
 #### **5.** transfer_whenContractExpiration_shouldTerminateTransferProcessAtExpiration()
-
-✓ Transfiere datos de una API con contrato que expira en 20 segundos
-
-✓ Valida que los datos son accesibles inicialmente
-
-⏱️ Espera 25 segundos
-
-✓ Valida que el acceso se bloquea automáticamente
-
-✓ Verifica que el proceso de transferencia se termina (TERMINATED)
-
+```
+✓ Transfer data from an API with a contract that expires in 20 seconds
+✓ Validate that the data is initially accessible
+⏱️ Wait 25 seconds
+✓ Validate that access is automatically blocked
+✓ Verify that the transfer process is terminated (TERMINATED)
+```
 #### **6.** transfer_retireAgreement_shouldBlockFurtherAccess()
-
-✓ Transfiere datos exitosamente
-
-✓ Provider retira el contrato manualmente
-
-✓ Valida que el acceso se bloquea inmediatamente
-
-✓ Provider reactiva el contrato
-
-✓ Valida que el acceso se restaura
-
-✓ Verifica el ciclo completo de retiro/reactivación
-
+```
+✓ Successfully transfers data
+✓ Provider manually withdraws the contract
+✓ Validates that access is immediately blocked
+✓ Provider reactivates the contract
+✓ Validates that access is restored
+✓ Verifies the complete withdrawal/reactivation cycle
+```
 #### **7.** transfer_forRestrictedDiscoveryAssets()
-
-✓ Transfiere datos de asset con descubrimiento restringido
-
-✓ Consumer tiene la credencial correcta (domain=route)
-
-✓ Valida que la transferencia es exitosa
-
+```
+✓ Transfer asset data with restricted discovery
+✓ Consumer has the correct credential (domain=route)
+✓ Validate that the transfer is successful
+```
 #### **8.** transfer_forRestrictedDiscoveryAssets_NotAvailable()
-
+```
 ✓ Intenta transferir asset con descubrimiento restringido
-
 ✗ Consumer NO tiene la credencial correcta (necesita domain=travel)
-
 ✓ Valida que la negociación se termina (TERMINATED)
-
+```
 #### **9.** transfer_whenPolicyNotMatched_shouldTerminate()
+```
+✓ Attempt to negotiate a contract with an impossible policy
+✓ Validate that the negotiation is automatically rejected
+✓ Verify TERMINATED status
+```
+**Result:**  The system negotiates contracts, validates policies,
+transfers HTTP and Kafka data, and handles errors correctly.
 
-✓ Intenta negociar contrato con policy imposible de satisfacer
+## **FASE 4: Report Tests ( (4 tests)**
 
-✓ Valida que la negociación se rechaza automáticamente
+### **What do they validate?**
 
-✓ Verifica estado TERMINATED
-
-**Resultado:** El sistema negocia contratos, valida políticas,
-transfiere datos HTTP y Kafka, y gestiona errores correctamente.
-
-## **FASE 4: Tests de Reportes (4 tests)**
-
-### **¿Qué validan?**
-
-Que el sistema recolecta **telemetría** de las transferencias y genera
-**reportes CSV** mensuales.
+That the system collects telemetry and generates monthly CSV reports.
 
 ### **Tests:**
 
 #### **1.** testReportGenerationSucceeds()
-
-✓ Crea eventos de telemetría simulados (consumer y provider)
-
-✓ Solicita generación de reporte CSV para septiembre 2025
-
-✓ Recupera el reporte usando autenticación JWT
-
-✓ Valida formato del CSV:
-
-\- contract_id
-
-\- data_transfer_response_status (200)
-
-\- total_transfer_size_in_kB (0.02)
-
-\- total_number_of_events (1)
-
-✓ Verifica que funciona con JWTs con múltiples roles
-
+```
+✓ Create simulated telemetry events (consumer and provider)
+✓ Request CSV report generation for September 2025
+✓ Retrieve the report using JWT authentication
+✓ Validate CSV format:
+  - contract_id
+  - data_transfer_response_status (200)
+  - total_transfer_size_in_kB (0.02)
+  - total_number_of_events (1)
+✓ Verify that it works with JWTs with multiple roles
+```
 #### **2.** testReportGenerationWithOnlyOnePartySucceeds()
-
-✓ Crea evento de telemetría solo del consumer (sin provider)
-
-✓ Genera reporte exitosamente con datos parciales
-
-✓ Valida que el sistema es robusto ante datos incompletos
-
+```
+✓ Creates telemetry event only from the consumer (without provider)
+✓ Successfully generates report with partial data
+✓ Validates that the system is robust in the face of incomplete data
+```
 #### **3.** testRetrieveReportWithNonExistentParticipantFails()
-
-✓ Intenta obtener reporte con JWT de participante inexistente
-
-✓ Valida que retorna 403 Forbidden
-
-✓ Verifica seguridad del sistema
-
+```
+✓ Attempt to obtain a report with a non-existent participant's JWT
+✓ Validate that it returns 403 Forbidden
+✓ Verify system security
+```
 #### **4.** testRetrieveNonExistentReportFromExistentParticipantFails()
+```
+✓ Attempt to obtain a report that does not exist
+✓ Validate that it returns 404 Not Found
+✓ Verify correct error handling
+```
+**Result:** The system collects telemetry, generates monthly reports,
+and protects access with authentication.
 
-✓ Intenta obtener reporte que no existe
+## **PHASE 5: Cleanup (@AfterAll)**
 
-✓ Valida que retorna 404 Not Found
+### **What does it do?**
 
-✓ Verifica manejo correcto de errores
+Processes pending telemetry events and validates storage.
 
-**Resultado:** El sistema recolecta telemetría, genera reportes
-mensuales y protege el acceso con autenticación.
+### **Steps:**
+```
+1. Connect to Event Hub
+2. Consume all telemetry events generated during testing
+3. Send each event to the Authority Telemetry Service
+4. Validate that the data was saved in PostgreSQL
+5. Verify that all contracts were processed (timeout: 1 minute)
+```
+**Result:** All telemetry events are stored and ready to generate reports.
 
-## **FASE 5: Cleanup (@AfterAll)**
-
-### **¿Qué hace?**
-
-Procesa eventos de telemetría pendientes y valida que todo se guardó
-correctamente.
-
-### **Pasos:**
-
-1\. Conecta a Event Hub
-
-2\. Consume todos los eventos de telemetría generados durante los tests
-
-3\. Envía cada evento a la Authority Telemetry Service
-
-4\. Valida que los datos se guardaron en PostgreSQL
-
-5\. Verifica que todos los contratos fueron procesados (timeout: 1
-minuto)
-
-**Resultado:** Todos los eventos de telemetría están almacenados y
-listos para generar reportes.
-
-## **Componentes Involucrados**
-
-  ----------------------------------------------------------------------
-  **Componente**                      **Rol en los Tests**
-  ----------------------------------- ----------------------------------
-  **authority-identityhub**           Almacena identidades de
-                                      participantes
-
-  **authority-issuerservice**         Emite credenciales verificables
-
-  **authority-federatedcatalog**      Recolecta catálogos de todos los
-                                      participantes
-
-  **authority-telemetryservice**      Recibe eventos de telemetría
-
-  **authority-telemetrycsvmanager**   Genera reportes CSV mensuales
-
-  **provider-controlplane**           Publica assets y negocia contratos
-
-  **provider-dataplane**              Transfiere datos reales
-
-  **provider-backend**                APIs y servicios de datos reales
-
-  **consumer-controlplane**           Descubre datos y negocia contratos
-
-  **consumer-dataplane**              Consume datos transferidos
-
-  **PostgreSQL**                      Almacena todos los datos
-                                      persistentes
-
-  **Event Hub**                       Cola de eventos de telemetría
-
-  **Kafka**                           Streaming de datos en tiempo real
-
-  **Vault**                           Gestión de secretos y claves
-  ----------------------------------------------------------------------
+## **Components Involved**
+| Component | Role in Tests |
+| :--- | :--- |
+| **authority-identityhub** | Stores participant identities |
+| **authority-issuerservice** | Issues verifiable credentials |
+| **authority-federatedcatalog** | Collects catalogs from all participants |
+| **authority-telemetryservice** | Receives telemetry events |
+| **authority-telemetrycsvmanager** | Generates monthly CSV reports |
+| **provider-controlplane** | Publishes assets and negotiates contracts |
+| **provider-dataplane** | Transfers actual data |
+| **provider-backend** | Real data APIs and services |
+| **consumer-controlplane** | Discovers data and negotiates contracts |
+| **consumer-dataplane** | Consumes transferred data |
+| **PostgreSQL** | Stores all persistent data |
+| **Event Hub** | Telemetry event queue |
+| **Kafka** | Real-time data streaming |
+| **Vault** | Secret and key management |
