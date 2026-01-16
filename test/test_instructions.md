@@ -18,7 +18,7 @@ This folder contains the template and guidelines for documenting tests performed
 
 4. **Test Environment:**
    - Specify the environment used (local, VM, cloud, etc.).
-   - List the tools used (Bruno, Postman, Jest, Pytest, JUnit, etc.).
+   - List the tools used (Bruno).
 
 5. **Test Cases and Results:**
    - For each test, specify the scenario, tool, result (pass/fail), and any relevant explanation or link to the test script/collection.
