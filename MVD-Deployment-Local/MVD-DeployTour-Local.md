@@ -8,7 +8,7 @@ This document details the complete deployment and execution process for the **MV
 
 The objective is to validate the operation of a Minimum Viable Dataspace (MVD) that simulates secure data exchange between participants within the ecosystem.
 
-![Infrastructure](images/Infrastructure.png)
+![Infrastructure](images/Infrastructure2.png)
 
 Main Components
 
