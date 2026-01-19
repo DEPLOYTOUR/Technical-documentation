@@ -39,35 +39,44 @@ For example `localhost/kafka-proxy-k8s-manager:latest`
 To solve this problem, it is necessary to re-tag the built images:
 
 ```
-docker tag control-plane-postgresql-hashicorpvault:latest
+docker tag control-plane-postgresql-hashicorpvault:latest \
 localhost/control-plane-postgresql-hashicorpvault:latest
 
-docker tag data-plane-postgresql-hashicorpvault:latest
+docker tag data-plane-postgresql-hashicorpvault:latest \
 localhost/data-plane-postgresql-hashicorpvault:latest
 
-docker tag federated-catalog-postgresql-hashicorpvault:latest
+docker tag federated-catalog-postgresql-hashicorpvault:latest \
 localhost/federated-catalog-postgresql-hashicorpvault:latest
 
-docker tag identity-hub-postgresql-hashicorpvault:latest
+docker tag identity-hub-postgresql-hashicorpvault:latest \
 localhost/identity-hub-postgresql-hashicorpvault:latest
 
-docker tag issuer-service-postgresql-hashicorpvault:latest
+docker tag issuer-service-postgresql-hashicorpvault:latest \
 localhost/issuer-service-postgresql-hashicorpvault:latest
 
-docker tag telemetry-service-postgresql-hashicorpvault:latest
+docker tag telemetry-service-postgresql-hashicorpvault:latest \
 localhost/telemetry-service-postgresql-hashicorpvault:latest
 
-docker tag telemetry-agent-postgresql-hashicorpvault:latest
+docker tag telemetry-agent-postgresql-hashicorpvault:latest \
 localhost/telemetry-agent-postgresql-hashicorpvault:latest
 
-docker tag backend-service-provider:latest
+docker tag backend-service-provider:latest \
 localhost/backend-service-provider:latest
 
-docker tag telemetry-storage-postgresql-hashicorpvault:latest
+docker tag telemetry-storage-postgresql-hashicorpvault:latest \
 localhost/telemetry-storage-postgresql-hashicorpvault:latest
 
-docker tag telemetry-csv-manager-postgresql-hashicorpvault:latest
+docker tag telemetry-csv-manager-postgresql-hashicorpvault:latest \
 localhost/telemetry-csv-manager-postgresql-hashicorpvault:latest
+
+docker tag federated-catalog-filter-postgresql-hashicorpvault:latest \
+localhost/federated-catalog-filter-postgresql-hashicorpvault:latest
+
+docker tag kafka-proxy-entra-auth:latest \
+localhost/kafka-proxy-entra-auth:latest
+
+docker tag kafka-proxy-k8s-manager:latest \
+localhost/kafka-proxy-k8s-manager:latest
 ```
 Then, it is necessary to load these images into the kind cluster as follows
 
