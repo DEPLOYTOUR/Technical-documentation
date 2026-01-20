@@ -24,13 +24,13 @@ npm install
 
 ---
 
-## 3. Configure the local backend
+## 3. Configure backend integration
 
-Open the project and modify the `api.config.local-backend.ts` file to add the `managementBEContextPath` constant, which is required to start the application.
+Open the project and edit the `api.config.local-backend.ts` file. Make sure to define the `managementBEContextPath` constant in this file, as it specifies the backend context path required for the application to initialize and communicate properly with backend services.
 
 ![Backend configuration example](./images/deploy_ui/ui_backend_config.png)
 
-The `basePath` and `PARTICIPANT_ID` constants are configured in the project's `angular.json` file. By default, they appear as shown in the image.
+The `basePath` and `PARTICIPANT_ID` constants are defined in the project's `angular.json` file. These values are set by default as shown in the example image, and are used by the application to connect with the backend.
 
 ![Routes configuration example](./images/deploy_ui/ui_backend_constants_config.png)
 
@@ -49,6 +49,8 @@ npm run start:local-backend-consumer
 
 ## 5. Configure the proxy to the backend
 
-Modify the `proxy.local-backend.conf.json` file and update the `target` property to point to the URL of the environment where the backend is located.
+To ensure that the user interface communicates correctly with the backend, you need to configure the proxy settings. Open the `proxy.local-backend.conf.json` file and locate the `target` property. Set this property to the URL of the backend you want to use. This allows the frontend to forward API requests to the correct backend server.
 
 ![Proxy configuration example](./images/deploy_ui/ui_proxy_config.png)
+
+> **Note:** The URL shown in the image above is just a placeholder. Make sure to replace it with the actual backend URL you intend to use.
