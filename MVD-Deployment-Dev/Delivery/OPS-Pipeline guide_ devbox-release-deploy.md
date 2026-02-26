@@ -2,22 +2,24 @@
 
 ## 1) When it runs
 
-This workflow is triggered when a **Release is published**:
+This workflow runs when:
 
-- `release: types: [published]`
+- A **Release is published**: `release: types: [published]`
+- Or it is run manually: `workflow_dispatch` with an optional `version` input
 
-It also defines **concurrency**, so there is only one “devbox” deployment running at a time.
+> Note: in the provided YAML there is **no** `concurrency` configuration.
 
-**Source code (workflow path in repo):**
-- `.github/workflows/devbox-release-deploy.yml`
+**Repo path:** `.github/workflows/devbox-release-deploy.yml`
 
 ---
 
 ## 2) Relevant global variables
 
-- **REGISTRY**
+Defined under `env:` in the workflow:
+
+- **REGISTRY**: `ghcr.io/deploytour`
 - **NAMESPACE**: `default`
-- **DEVBOX_COMPONENTS**: list of images/components that are built/published and then redeployed
+- **DEVBOX_COMPONENTS**: multi-line list of components/images that get tagged/promoted
 
 ---
 
@@ -25,112 +27,90 @@ It also defines **concurrency**, so there is only one “devbox” deployment ru
 
 ### Job A — `build_publish_promote`
 
-Builds and publishes artifacts + promotes `latest`.
+**Goal:** build artifacts, build images, publish `${VERSION}` to GHCR, and promote `${VERSION} -> latest`.
 
 **Steps:**
-1. Checkout
-2. Resolve `VERSION`: takes the release `tag_name` and uses it as `VERSION`
-3. Setup Java 17 (for Gradle)
-4. Login to GHCR (PAT)
-5. Build JARs:
-    - `./gradlew shadowJar`
-6. Build Docker images:
-    - `./gradlew dockerize`
-7. Tag & Push VERSION:
-    - tags `:latest` locally as `:${VERSION}` and pushes to the registry
-8. Promote VERSION -> latest:
-    - pulls `:${VERSION}`, tags to `:latest` and pushes
+1. **Checkout**
+2. **Resolve VERSION**
+   - Uses `github.event.release.tag_name` (Release) or `workflow_dispatch.inputs.version` (manual).
+   - The script writes `version=<...>` to `GITHUB_OUTPUT`.
+3. **GHCR login**
+   - `docker login ghcr.io` using `GHCR_USER/GHCR_TOKEN`.
+4. **Build jars**
+   - `./gradlew shadowJar`
+5. **Build Docker images**
+   - `./gradlew dockerize`
+6. **Tag & push VERSION**
+   - For each component in `DEVBOX_COMPONENTS`: tags local `img:latest` as `ghcr.io/deploytour/img:${VERSION}` and pushes it.
+7. **Promote VERSION -> latest**
+   - For each component: pulls `ghcr.io/deploytour/img:${VERSION}`, tags it as `:latest`, and pushes.
 
-**Job output:**
-- Exposes `version` for the next job.
+**Job output:** exposes `version` for the next job.
+
+**Operational notes:**
+- `Tag & push VERSION` assumes local images `"<img>:latest"` exist (built by `gradlew dockerize`).
+- If `DEVBOX_COMPONENTS` contains an invalid entry (e.g., `all`), it will fail with “No such image …”.
 
 ---
 
 ### Job B — `redeploy_version`
 
-Connects via SSH to the remote machine and executes the redeploy.
+**Goal:** redeploy on a remote machine via SSH, using the repo already cloned on that machine.
 
 **Steps:**
-1. Checkout (only to have the repo in the runner; the real redeploy is remote)
-2. SSH to the machine with `appleboy/ssh-action` and execute:
-    - `.github/workflows/scripts/redeploy_version_tag.sh`
-    - inside the already cloned remote repo
+1. **Checkout** (only for the runner; the real deploy is remote)
+2. **SSH (appleboy/ssh-action)** and execute on the remote host:
+   - `REPO_DIR="/home/ubuntu/DEPLOYTOUR-connector"`
+   - `SCRIPT_PATH="${REPO_DIR}/.github/workflows/scripts/redeploy_devbox_terraform.sh"`
+   - `chmod +x` and run the script.
+
+The workflow forwards these env vars to the remote script via `envs:`:
+`DEVBOX_COMPONENTS,NAMESPACE,VERSION,REGISTRY,GHCR_USER,GHCR_TOKEN`.
 
 ---
 
-## 4) What the remote redeploy actually does (`redeploy_version_tag.sh`)
+## 4) What the remote redeploy does (`redeploy_devbox_terraform.sh`)
 
 **Technical summary:**
-- Re-creates the GHCR secret `ghcr-cred` in the namespace
-- Attaches it to `serviceaccount/default`
-- For each deployment listed in `DEVBOX_COMPONENTS`:
-    - forces `imagePullPolicy=Always`
-    - continues with update/rollout
-    - considers “stuck rollout”
-    - if it detects pods in `Terminating`, it may force delete them to unblock the rollout
+- Validates `kubectl`, `terraform`, and kubeconfig.
+- Exports `TF_VAR_*` variables and runs:
+  - `terraform -chdir=system-tests init -upgrade`
+  - `terraform -chdir=system-tests apply -auto-approve -var="image_tag=${VERSION}"`
+- Then prints:
+  - deployments and their images in `NAMESPACE` (`default`)
+  - pods in `default`
+  - and filters problematic states (ImagePullBackOff, CrashLoop, etc.)
 
-**Important point:**
-This is **not** a hard reset of the environment. It is a **redeploy/retag/rollout** of deployments: it adjusts images/pull policy and forces the cluster to consume `:${VERSION}`.
-
----
-
-## 5) Versioning decision: why version is “set” in the deployment and not in the product repo
-
-### 5.1 What problem is being covered today
-
-There is an explicit comment in `restart_devbox.sh`:
-
-> “Terraform/Helm values still reference tag=latest, so we map latest -> 0.1.”
-
-And the script allows:
-
-- `ENSURE_LATEST_TAGS=true` to “fabricate” `:latest` from a base tag (`TAG_BASE=0.1`)
-
-This indicates:
-
-- current IaC (Terraform/Helm) is coupled to `:latest`
-- release process wants to promote versions and redeploy without touching the original product repo
+**Key point:** this redeploy does **not** patch deployments manually nor force `imagePullPolicy`. The actual change must be applied through Terraform (whatever is defined under `system-tests`).
 
 ---
 
-### 5.2 Critical evaluation (for production)
+## 5) Versioning: how the version is actually applied
 
-Using `latest` in production is usually a bad idea because:
+### 5.1 What the pipeline does today
 
-- It does not guarantee reproducibility
-- It makes exact rollback harder
-- It can introduce uncontrolled changes if `latest` moves by mistake
+- Publishes images with immutable tag `${VERSION}` in GHCR for the listed components.
+- Promotes `${VERSION}` to `latest` in GHCR.
+- Deploys through Terraform, forcing `-var="image_tag=${VERSION}"` (high priority vs `terraform.tfvars`).
 
-The current approach (promoting and forcing `latest`, or patching deployments to point to `:${VERSION}`) is operationally valid for **MVD/devbox**, but for production the correct approach would be:
+### 5.2 Practical evaluation
 
-**Recommended option**
-- Parameterize Terraform/Helm to deploy immutable tags (`:${VERSION}`)
-- Pipeline should run `terraform apply` with that version (or update values) instead of patching deployments manually
-
-**How it would be addressed**
-- Add an `imageTag`/`version` variable in Terraform/Helm
-- Pipeline: instead of “promote latest”, pass `VERSION` to IaC
-- Keep `latest` only for ephemeral environments or tests
+- For devbox/MVD environments, keeping `latest` can be acceptable, but `${VERSION}` should be the source of truth.
+- The IaC deployment (Terraform) is already aligned with this by passing `image_tag` via CLI.
 
 ---
 
-## 6) Flow diagrams (text form)
+## 6) Flow (text)
 
-### High-level flow
-
-1. Release published
-2. Job `build_publish_promote`
-    - `resolve_version.sh`: `VERSION=release.tag`
-    - `setup-java 17`
-    - `ghcr_login.sh`
-    - `build_jars.sh`: `gradlew shadowJar`
-    - `build_docker_images.sh`: `gradlew dockerize`
-    - `tag_push_version.sh`: `:latest -> :VERSION` push
-    - `promote_version_to_latest.sh`: `:VERSION -> :latest` push
-3. Job `redeploy_version`
-    - SSH to remote
-    - run `redeploy_version_tag.sh` on remote
-    - create `ghcr-cred` + patch `serviceaccount/default`
-    - set deployments to `VERSION` + rollout
-
-![img.png](img.png)
+1. Release published **or** workflow_dispatch
+2. `build_publish_promote`
+   - resolve_version → `VERSION`
+   - ghcr_login
+   - gradle shadowJar
+   - gradle dockerize
+   - tag_push_version: `img:latest` → `ghcr.io/deploytour/img:${VERSION}`
+   - promote_version_to_latest: `ghcr.io/deploytour/img:${VERSION}` → `:latest`
+3. `redeploy_version`
+   - SSH to remote host
+   - run `redeploy_devbox_terraform.sh`
+   - terraform apply with `-var="image_tag=${VERSION}"` and print deployment state
