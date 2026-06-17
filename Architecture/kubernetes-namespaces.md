@@ -2,8 +2,6 @@
 
 To ensure security, logical segregation, and efficient resource management, the Deploytour dataspace cluster is structured into distinct Kubernetes namespaces. This separation isolates administrative and central components from participant environments.
 
-![Operator vs. Participant View](./images/namespacesDistribution.png)
-
 ```mermaid
 graph TD
     subgraph Cluster ["Deploytour Kubernetes Cluster"]

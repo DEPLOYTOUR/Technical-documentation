@@ -11,8 +11,6 @@ Instead of deploying and managing multiple Vault instances, the platform utilize
 The diagram below illustrates how components inside the Kubernetes cluster authenticate and interact with their respective isolated Secret Engines hosted on the external Vault server.
 
 
-![Operator vs. Participant View](./images/vaultDistribution.png)
-
 
 ```mermaid
 graph TD

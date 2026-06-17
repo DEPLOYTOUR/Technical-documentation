@@ -2,7 +2,6 @@
 
 The database architecture of the Deploytour dataspace is designed to separate application utility data from core business and governance data. It enforces data sovereignty and security through logical schema isolation.
 
-![Operator vs. Participant View](./images/databaseDistribution.png)
 
 ```mermaid
 graph TD
