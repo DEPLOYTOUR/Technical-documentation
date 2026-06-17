@@ -17,9 +17,9 @@ graph TD
         end
         
         subgraph ParticipantsDB ["Participants Database (Sovereignty)"]
-            subgraph Part1 ["Participant: <name>"]
-                Schema_P1_EDC[(Schema: <name>-edc-connectordb)]
-                Schema_P1_IH[(Schema: <name>-identitydb)]
+            subgraph Part1 ["Participant: name"]
+                Schema_P1_EDC[(Schema: name-edc-connectordb)]
+                Schema_P1_IH[(Schema: name-identitydb)]
             end
         end
     end
