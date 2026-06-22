@@ -29,16 +29,15 @@ This namespace is dedicated entirely to the deployment and operation of **ArgoCD
 ### 2. `operator`
 Hosts the central governance and administrative applications of the dataspace. These are operated by the central authority to orchestrate onboarding, compliance, and catalog federation.
 * **Hosted Components**:
-  * **Onboarding Portal**: Web GUI for user onboarding and administrator oversight.
-  * **Onboarding Backend**: Business logic orchestration.
-  * **Federated Catalog**: Aggregates asset metadata across the dataspace.
-  * **Authority Identity Hub**: Manages Central Decentralized Identifiers (DIDs) and issues Verifiable Credentials (VCs).
+  * **onboarding-portal**: Web GUI for user onboarding and administrator oversight.
+  * **onboarding-backend**: Business logic orchestration.
+  * **federated-catalog**: Aggregates asset metadata across the dataspace.
+  * **authority-identity-hub**: Manages Central Decentralized Identifiers (DIDs) and issues Verifiable Credentials (VCs).
 
 ### 3. `tools`
 Contains shared backing utilities and monitoring systems. These services support the cluster's security and observability.
 * **Hosted Components**:
-  * **Keycloak**: Central Identity Provider (IdP) for web portals and API clients.
-  * **External HashiCorp Vault**: Used for secure storage of secrets and cryptographic keys (hosted externally to the Kubernetes cluster to optimize resources and enhance security boundaries).
+  * **keycloak**: Central Identity Provider (IdP) for web portals and API clients.
   * **Audit & Telemetry**: OpenTelemetry collector and ClickHouse database for high-performance log and audit trail analysis.
   * **Monitoring Stack**: Prometheus (metrics ingestion), Grafana (visualization), Loki (log aggregation), and Tempo (distributed tracing).
 
@@ -46,6 +45,6 @@ Contains shared backing utilities and monitoring systems. These services support
 A dynamically provisioned namespace created **for each participant** who joins the dataspace. This guarantees absolute runtime isolation, preventing participants from accessing each other's pods, secrets, or configurations.
 * **Naming Convention**: `participant-edc-<participant-name>` (e.g., `participant-edc-participant1`).
 * **Hosted Components**:
-  * **Participant Identity Hub**: Wallet managing the participant's Verifiable Credentials (VCs).
-  * **GUI Connector**: Graphical interface for managing connector assets, policies, and contracts.
-  * **EDC Connector**: Composed of the Control Plane (negotiations and policies) and the Data Plane (secure data channel).
+  * **<name>-identity-hub**: Wallet managing the participant's Verifiable Credentials (VCs).
+  * **<name>-gui-connector**: Graphical interface for managing connector assets, policies, and contracts.
+  * **<name>-edc-connector**: Composed of the Control Plane (negotiations and policies) and the Data Plane (secure data channel).
