@@ -7,13 +7,12 @@ The database architecture of the Deploytour dataspace is designed to separate ap
 graph TD
     subgraph DataStore ["Database Infrastructure"]
         subgraph ToolDBs ["Tooling Databases"]
-            DB_KC[(Keycloak DB)]
-            DB_SQ[(SonarQube DB)]
+            DB_KC[(keycloakdb)]
         end
         
         subgraph AuthorityDB ["Authority Database (Governance)"]
             Schema_FC[(Schema: federatecatalogdb)]
-            Schema_AIH[(Schema: identityhubdb)]
+            Schema_AIH[(Schema: authority-identitydb)]
         end
         
         subgraph ParticipantsDB ["Participants Database (Sovereignty)"]
@@ -31,14 +30,13 @@ graph TD
 
 ### 1. Tooling Databases (`ToolDBs`)
 These databases store configuration, auditing, and platform settings for cluster management tools. They are completely separated from business-logic data.
-* **Keycloak Database**: Stores realm configurations, client registrations, and administration console states.
-* **SonarQube Database**: Stores static code analysis results and quality gate history.
+* **keycloakdb**: Stores realm configurations, client registrations, and administration console states.
 
 ### 2. Authority Database (`AuthorityDB`)
 Operated by the central dataspace operator, this database stores metadata for governance, onboarding, and compliance. To enforce separation of concerns, each central component uses its own isolated schema.
 * **Schemas**:
   * **`federatecatalogdb`**: Caches catalog dataset metadata collected from participant nodes.
-  * **`identityhubdb`**: Stores authority key material metadata and issued Verifiable Credentials (VCs).
+  * **`authority-identitydb`**: Stores authority key material metadata and issued Verifiable Credentials (VCs).
 
 ### 3. Participants Database (`ParticipantsDB`)
 To support the Connector-as-a-Service model efficiently without deploying separate database servers for every single participant, a shared database server is used. However, **absolute data isolation** is enforced by provisioning dedicated schemas for each participant.
