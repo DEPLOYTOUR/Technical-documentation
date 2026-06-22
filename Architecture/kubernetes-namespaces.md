@@ -45,6 +45,6 @@ Contains shared backing utilities and monitoring systems. These services support
 A dynamically provisioned namespace created **for each participant** who joins the dataspace. This guarantees absolute runtime isolation, preventing participants from accessing each other's pods, secrets, or configurations.
 * **Naming Convention**: `participant-edc-<participant-name>` (e.g., `participant-edc-participant1`).
 * **Hosted Components**:
-  * **<name>-identity-hub**: Wallet managing the participant's Verifiable Credentials (VCs).
-  * **<name>-gui-connector**: Graphical interface for managing connector assets, policies, and contracts.
-  * **<name>-edc-connector**: Composed of the Control Plane (negotiations and policies) and the Data Plane (secure data channel).
+  * **name-identity-hub**: Wallet managing the participant's Verifiable Credentials (VCs).
+  * **name-gui-connector**: Graphical interface for managing connector assets, policies, and contracts.
+  * **name-edc-connector**: Composed of the Control Plane (negotiations and policies) and the Data Plane (secure data channel).
