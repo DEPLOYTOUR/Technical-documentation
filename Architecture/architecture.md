@@ -11,7 +11,7 @@ It identifies the central governance services (such as the Federated Catalog and
 
 ### Onboarding Portal
 
-The Dataspace Portal is the primary user-facing interface of the Espordata Operator. It serves as a single entry point for participants and administrators to interact with the Espordata ecosystem.
+The Dataspace Portal is the primary user-facing interface of the Authority. It serves as a single entry point for administrators to interact with the Deploytour ecosystem.
 
 It is a core architectural component responsible for orchestrating and visualizing interactions with the underlying services, such as Identity, Compliance, and Catalogue.
 
